@@ -8,6 +8,9 @@ import pandas as pd
 from title_and_url import data
 
 def save_to_spreadsheet(data, output_file):
+    if not data:
+        print("No data to save.")
+        return
     df = pd.DataFrame(data)
     df.to_excel(output_file, index=False)
     print(f"Data saved to {output_file}")
@@ -24,8 +27,6 @@ if __name__ == '__main__':
     event_contacts = []
 
     for title, url in data:
-        if url_counter > 7:
-            break
         browser.get(url)
         try:
             wait = WebDriverWait(browser, .5)
