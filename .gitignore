@@ -1,4 +1,5 @@
 # venv initialization
+__pycache__
 Include
 Lib
 Scripts
