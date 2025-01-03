@@ -18,7 +18,8 @@ def save_to_spreadsheet(data, output_file):
 
 if __name__ == '__main__':
     url_counter = 0
-    user_name = "" # Edit to your PC User.
+    user_name = "GCCARRANZA" # Edit to your PC User.
+    data_length = len(data)
 
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless=new')
@@ -35,6 +36,7 @@ if __name__ == '__main__':
             contact, email, *args =  items
             clean_name = contact.text.strip("Event contact ")
             clean_email = email.text.strip("Email ")
+            print(clean_name, clean_email, title, url)
             event_contacts.append({
                 "Event Name": title,
                 "Event URL": url,
@@ -52,6 +54,8 @@ if __name__ == '__main__':
             })
 
         url_counter += 1
+
+        print('Percentage: %i' % (url_counter / data_length * 100))
 
     browser.quit()
     print('Processed URL(s):%i.' % url_counter)
