@@ -1,7 +1,7 @@
 from pathlib import Path
 
-def save_as_text_file(urls:list):
-    file_path = Path('urls.txt')
+def save_as_text_file(urls:list, filename: str):
+    file_path = Path(filename)
     print(file_path)
 
     with file_path.open('w') as file:

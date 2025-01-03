@@ -32,7 +32,7 @@ def get_anchors(browser:webdriver.Chrome):
     wait = WebDriverWait(browser, 10)
     anchors = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'search-results__card-event-name')))
     for a in anchors:
-        urls.append('%s%s' % (a.get_attribute('href'), '\n'))
+        urls.append(('%s%s' % (a.get_attribute('href'), '\n'), '%s%s' % (a.text, '\n')))
 
 def next_page(browser:webdriver.Chrome):
     global next_indicator
@@ -45,10 +45,6 @@ def next_page(browser:webdriver.Chrome):
                 if (e.location_once_scrolled_into_view['y'] <= pos_y_indicator):
                     e.click()
                     break
-                
-
-
-                    
 
 if __name__ == '__main__':
     chrome_options=webdriver.ChromeOptions()
@@ -72,7 +68,10 @@ if __name__ == '__main__':
     
 
     # Iterate this list into spreadsheet.
-    save_as_text_file(urls)
+    retrieved_urls = [url[0] for url in urls]
+    retrieved_titles = [title[1] for title in urls]
+    save_as_text_file(retrieved_urls, "urls.txt")
+    save_as_text_file(retrieved_titles, "titles.txt")
 
     print("Total number of result is %i, got %i urls" % (results, len(urls)))
     browser.quit()

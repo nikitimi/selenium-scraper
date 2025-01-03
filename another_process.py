@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from urls import urls
+from title_and_url import data
 
 if __name__ == '__main__':
     url_counter = 0
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     chrome_options.add_argument('--headless=new')
     browser = webdriver.Chrome(options=chrome_options)
 
-    for url in urls:
+    for title, url in data:
         browser.get(url)
         try:
 
@@ -20,10 +20,10 @@ if __name__ == '__main__':
             _, name, email = element.text.splitlines()
             clean_name = name.strip('Event contact ')
             clean_email = email.strip('Email ')
-            print(clean_name, clean_email)
+            print(clean_name, clean_email, title, url)
         except Exception as e:
             print(e)
-            print('No contact information extracted.')
+            print('No contact information extracted.', title, url)
 
         url_counter += 1
 
