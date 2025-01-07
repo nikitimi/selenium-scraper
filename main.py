@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from save_file import save_as_text_file
+from modules.file_helper.save_file import save_as_text_file
 
 
 search_url='https://raceroster.com/search?q=5k&t=upcoming'
