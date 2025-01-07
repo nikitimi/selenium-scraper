@@ -1,78 +1,60 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import time
+import os
+import requests
 
-from modules.file_helper.save_file import save_as_text_file
+# Set up Chrome options to allow direct PDF download (for the download step)
+download_path = "C:/Users/GCCARRANZA/Downloads/sec_aaer_downloads"
+chrome_options = Options()
+chrome_options.add_experimental_option("prefs", {
+    "download.default_directory": download_path,  # Specify your preferred download directory
+    "download.prompt_for_download": False,  # Disable download prompt
+    "plugins.always_open_pdf_externally": True,  # Automatically open PDF in browser
+    "safebrowsing.enabled": False,  # Disable Chrome’s safe browsing check that can block downloads
+    "profile.default_content_settings.popups": 0  # Disable popups
+})
 
+# Set up the webdriver with options
+driver = webdriver.Chrome(options=chrome_options)
 
-search_url='https://raceroster.com/search?q=5k&t=upcoming'
-next_indicator='Next »'
+# URLs for pages 1, 2, and 3
+urls = [
+    "https://www.sec.gov/enforcement-litigation/accounting-auditing-enforcement-releases?page=0",
+]
 
-def sanitize_string_number(value:str) -> int:
-    '''
-        returns -1 if failed to parse into integer.
-    '''
-    remove_list = (',', 'results!', ' ')
-    for rm in remove_list:
-        value = value.replace(rm, '')
+# Initialize an empty list to store the URLs and AAER numbers
+pdf_data = []
 
-    try:
-        return int(value)
-    except:
-        return -1
+# Loop through each URL (pages 1, 2, and 3)
+for url in urls:
+    print(f"Scraping URL: {url}...")
+    driver.get(url)
 
-def get_number_of_results(browser:webdriver.Chrome) -> int:
-    wait = WebDriverWait(browser, 10)
-    element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'search-results__metrics')))
-    result = element.find_element(By.CLASS_NAME, 'text-end')
-    return sanitize_string_number(result.text)
-
-def get_anchors(browser:webdriver.Chrome):
-    wait = WebDriverWait(browser, 10)
-    anchors = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'search-results__card-event-name')))
-    for a in anchors:
-        urls.append(('%s%s' % (a.get_attribute('href'), '\n'), '%s%s' % (a.text, '\n')))
-
-def next_page(browser:webdriver.Chrome):
-    global next_indicator
-    wait = WebDriverWait(browser, 10)
-    elements = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'btn-link')))
-    for e in elements:
-        if next_indicator == e.text:
-            pos_y_indicator = 460 # Firefox - 505, Chrome - 460
-            while (e.location_once_scrolled_into_view['y'] > pos_y_indicator):
-                if (e.location_once_scrolled_into_view['y'] <= pos_y_indicator):
-                    e.click()
-                    break
-
-if __name__ == '__main__':
-    chrome_options=webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless=new')
-    browser = webdriver.Chrome(options=chrome_options)
-    browser.get(search_url)
-    assert 'Race Roster' in browser.title
+    # Wait for the table rows containing links to be loaded
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="block-uswds-sec-content"]/div/div/div[3]/div/table/tbody/tr[1]')))
     
-    page_counter = 0
-    urls = []
-    
-    try:
-        results = get_number_of_results(browser)
-        while len(urls) < results:
-            page_counter += 1
-            print('Page: %i,\tTotal URL(s): %i' % (page_counter, len(urls)))
-            get_anchors(browser)
-            next_page(browser)
-    except Exception as e:
-        print(e)
-    
+    # Extract the link and AAER number from each row on the current page
+    rows = driver.find_elements(By.XPATH, '//*[@id="block-uswds-sec-content"]/div/div/div[3]/div/table/tbody/tr')
+    for row in rows:
+        try:
+            # Extract the link from the first column (PDF link)
+            link_element = row.find_element(By.XPATH, './/td[2]/div[1]/a')
+            link_href = link_element.get_attribute('href')
+            
+            # Extract the AAER number from the second column
+            aaer_text_element = row.find_element(By.XPATH, './/td[2]/div[2]/span[2]')
+            aaer_text = aaer_text_element.text
+            aaer_number = aaer_text.split("AAER-")[1].split()[0]  # Extract the number after AAER-
 
-    # Iterate this list into spreadsheet.
-    retrieved_urls = [url[0] for url in urls]
-    retrieved_titles = [title[1] for title in urls]
-    save_as_text_file(retrieved_urls, "urls.txt")
-    save_as_text_file(retrieved_titles, "titles.txt")
+            # Store the data in a list of dictionaries
+            pdf_data.append({'link': link_href, 'aaer_number': aaer_number})
+        except Exception as e:
+            print(f"Error extracting data from row: {e}")
 
-    print("Total number of result is %i, got %i urls" % (results, len(urls)))
-    browser.quit()
-
+# Print the scraped data (optional for verification)
+for entry in pdf_data:
+    print(f"Link: {entry['link']}, AAER Number: {entry['aaer_number']}")
